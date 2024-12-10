@@ -152,20 +152,21 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, angle: float = 0):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
         """
         super().__init__()
         self.vx, self.vy = bird.dire
-        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle += math.degrees(math.atan2(-self.vy, self.vx))
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 1.0)
-        self.vx = math.cos(math.radians(angle))
-        self.vy = -math.sin(math.radians(angle))
+        rad_angle = math.radians(angle)
+        self.vx = math.cos(rad_angle)
+        self.vy = -math.sin(rad_angle)
         self.rect = self.image.get_rect()
-        self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
-        self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
+        self.rect.centery = bird.rect.centery + bird.rect.height * self.vy
+        self.rect.centerx = bird.rect.centerx + bird.rect.width * self.vx
         self.speed = 10
 
     def update(self):
@@ -233,6 +234,15 @@ class Enemy(pg.sprite.Sprite):
             self.state = "stop"
         self.rect.move_ip(self.vx, self.vy)
 
+class NeoBeam:
+    def __init__(self, bird: Bird, num: int):
+        self.bird = bird
+        self.num = num
+
+    def gen_beams(self) -> list[Beam]:
+        step = 100 // (self.num - 1)
+        angles = range(-50, 51, step)
+        return [Beam(self.bird, angle) for angle in angles]
 
 class Score:
     """
@@ -341,6 +351,7 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
+
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
 
@@ -351,12 +362,20 @@ def main():
                 bird.hyper_life = 500
                 score.value -= 100  # スコア消費
 
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    beams.add(Beam(bird))
+                if key_lst[pg.K_LALT] and event.key == pg.K_SPACE:
+                    neo_beam = NeoBeam(bird, 5)
+                    beams.add(*neo_beam.gen_beams())
+
             if score.value >= 20 and key_lst[pg.K_e] and not emp.active:
                 if score.value >= 20:
                     score.value -= 20
                 emp.activate()
             elif emp.active and key_lst[pg.K_e]:
                 emp.deactivate()
+
 
         screen.blit(bg_img, [0, 0])
 
