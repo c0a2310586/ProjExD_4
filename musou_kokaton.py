@@ -223,6 +223,36 @@ class Enemy(pg.sprite.Sprite):
         self.rect.move_ip(self.vx, self.vy)
 
 
+class Gravity(pg.sprite.Sprite):
+    """
+    重力場発動のクラス
+    """
+    def __init__(self, life = 400):
+        """
+        背景用surfaceを生成する
+        引数life: 発動時間, 400に設定
+        背景の透明度: 50
+        """
+        super().__init__()
+        self.life = life  # 発動時間を設定, 以後update()にて減算
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        pg.draw.rect(self.image, (0, 0, 0), pg.Rect(0, 0, WIDTH, HEIGHT))  # 黒色を設定
+        self.image.set_alpha(50)  # 透明度50
+        self.rect = self.image.get_rect()
+
+
+    def update(self, screen: pg.Surface):
+        """
+        lifeを呼び出し毎に減算
+        screenへの反映
+        """
+        self.life -= 1  # lifeの減算
+        print(self.life)
+        screen.blit(self.image, self.rect)  # screenに反映
+        if self.life == 0:
+            self.kill()
+
+
 class Score:
     """
     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
@@ -253,6 +283,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    gra = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -263,6 +294,9 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                print("AAA")
+                gra = Gravity()
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -298,6 +332,7 @@ def main():
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
+        gra.update(screen)
         score.update(screen)
         pg.display.update()
         tmr += 1
