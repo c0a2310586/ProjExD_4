@@ -107,6 +107,10 @@ class Bird(pg.sprite.Sprite):
             if self.hyper_life < 0:
                 self.state = "normal"  # 無敵状態終了
         screen.blit(self.image, self.rect)
+        if key_lst[pg.K_LSHIFT]:
+            self.speed = 20
+        else:
+            self.speed = 10
 
 
 class Bomb(pg.sprite.Sprite):
@@ -257,7 +261,41 @@ class Score:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
+class EMP:
+    def __init__(self, enemies, bombs, screen):
+        self.enemies = enemies
+        self.bombs = bombs
+        self.screen = screen
+        self.active = False
+        self.timer = 0
 
+    def activate(self):
+        self.active = True
+        for enemy in self.enemies:
+            enemy.interval = float('inf')
+            enemy.image = pg.transform.laplacian(enemy.image)
+        for bomb in self.bombs:
+            bomb.speed //= 2
+
+    def deactivate(self):
+        self.active = False
+        for enemy in self.enemies:
+            enemy.interval = random.randint(50, 300)
+            # 元の画像に戻す処理が必要な場合はここで行う
+        for bomb in self.bombs:
+            bomb.speed *= 2
+
+    def update(self):
+        if self.active:
+            self.timer += 1
+            if self.timer % 5 == 0:
+                # 画面全体に透明度のある黄色矩形を描画
+                surface = pg.Surface(self.screen.get_size(), pg.SRCALPHA)
+                surface.fill((255, 255, 0, 128))  # 黄色で、透明度128
+                self.screen.blit(surface, (0, 0))
+                # 他のオブジェクトを描画するコードの後に配置
+
+                self.timer = 0  # タイマーをリセット
 
 class Shield(pg.sprite.Sprite):
     """
@@ -305,6 +343,7 @@ def main():
     emys = pg.sprite.Group()
     shield = pg.sprite.Group()
 
+    emp = EMP(emys, bombs, screen)
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -315,6 +354,7 @@ def main():
 
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+
             if event.type == pg.KEYDOWN and event.key == pg.K_s:
                 shield.add(Shield(bird, life=400))
             if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT and score.value > 100:
@@ -328,6 +368,15 @@ def main():
                 if key_lst[pg.K_LALT] and event.key == pg.K_SPACE:
                     neo_beam = NeoBeam(bird, 5)
                     beams.add(*neo_beam.gen_beams())
+
+            if score.value >= 20 and key_lst[pg.K_e] and not emp.active:
+                if score.value >= 20:
+                    score.value -= 20
+                emp.activate()
+            elif emp.active and key_lst[pg.K_e]:
+                emp.deactivate()
+
+
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
