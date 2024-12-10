@@ -246,11 +246,11 @@ class Gravity(pg.sprite.Sprite):
         lifeを呼び出し毎に減算
         screenへの反映
         """
-        self.life -= 1  # lifeの減算
-        print(self.life)
-        screen.blit(self.image, self.rect)  # screenに反映
-        if self.life == 0:
+        if self.life < 0:
+            # print(self.life)
             self.kill()
+        self.life -= 1  # lifeの減算
+        screen.blit(self.image, self.rect)  # screenに反映
 
 
 class Score:
@@ -295,8 +295,8 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
             if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
-                print("AAA")
-                gra = Gravity()
+                # print("AAA")
+                gra.add(Gravity())
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
