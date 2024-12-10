@@ -234,6 +234,7 @@ class Enemy(pg.sprite.Sprite):
             self.state = "stop"
         self.rect.move_ip(self.vx, self.vy)
 
+
 class NeoBeam:
     def __init__(self, bird: Bird, num: int):
         self.bird = bird
@@ -243,6 +244,37 @@ class NeoBeam:
         step = 100 // (self.num - 1)
         angles = range(-50, 51, step)
         return [Beam(self.bird, angle) for angle in angles]
+
+
+class Gravity(pg.sprite.Sprite):
+    """
+    重力場発動のクラス
+    """
+    def __init__(self, life = 400):
+        """
+        背景用surfaceを生成する
+        引数life: 発動時間, 400に設定
+        背景の透明度: 50
+        """
+        super().__init__()
+        self.life = life  # 発動時間を設定, 以後update()にて減算
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        pg.draw.rect(self.image, (0, 0, 0), pg.Rect(0, 0, WIDTH, HEIGHT))  # 黒色を設定
+        self.image.set_alpha(50)  # 透明度50
+        self.rect = self.image.get_rect()
+
+
+    def update(self, screen: pg.Surface):
+        """
+        lifeを呼び出し毎に減算
+        screenへの反映
+        """
+        if self.life < 0:
+            # print(self.life)
+            self.kill()
+        self.life -= 1  # lifeの減算
+        screen.blit(self.image, self.rect)  # screenに反映
+
 
 class Score:
     """
@@ -342,6 +374,7 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     shield = pg.sprite.Group()
+    gra = pg.sprite.Group()
 
     emp = EMP(emys, bombs, screen)
     tmr = 0
@@ -354,21 +387,22 @@ def main():
 
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
-
+            if score.value >= 200 and (event.type == pg.KEYDOWN and event.key == pg.K_RETURN):  # score200以上で
+                # print("AAA")
+                score.value -= 200  # scoreのうち200を消費
+                gra.add(Gravity())
             if event.type == pg.KEYDOWN and event.key == pg.K_s:
                 shield.add(Shield(bird, life=400))
             if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT and score.value > 100:
                 bird.state = "hyper"
                 bird.hyper_life = 500
                 score.value -= 100  # スコア消費
-
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
                     beams.add(Beam(bird))
                 if key_lst[pg.K_LALT] and event.key == pg.K_SPACE:
                     neo_beam = NeoBeam(bird, 5)
                     beams.add(*neo_beam.gen_beams())
-
             if score.value >= 20 and key_lst[pg.K_e] and not emp.active:
                 if score.value >= 20:
                     score.value -= 20
@@ -409,6 +443,12 @@ def main():
                 pg.display.update()
                 time.sleep(2)
                 return
+        for emy in pg.sprite.groupcollide(emys, gra, True, False).keys():  # 重力と衝突した敵機リスト
+            exps.add(Explosion(emy, 100))  # 敵機の爆発エフェクト
+        
+        for bomb in pg.sprite.groupcollide(bombs, gra, True, False).keys():  # 重力と衝突した爆弾リスト
+            exps.add(Explosion(bomb, 50))  # 爆弾の爆発エフェクト
+
 
         bird.update(key_lst, screen)
         beams.update()
@@ -419,6 +459,7 @@ def main():
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
+        gra.update(screen)
         score.update(screen)
         shield.update()
         shield.draw(screen)
