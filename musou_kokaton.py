@@ -107,6 +107,10 @@ class Bird(pg.sprite.Sprite):
             if self.hyper_life < 0:
                 self.state = "normal"  # 無敵状態終了
         screen.blit(self.image, self.rect)
+        if key_lst[pg.K_LSHIFT]:
+            self.speed = 20
+        else:
+            self.speed = 10
 
 
 class Bomb(pg.sprite.Sprite):
