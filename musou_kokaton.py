@@ -294,7 +294,7 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
-            if (score.value >= 200) and (event.type == pg.KEYDOWN and event.key == pg.K_RETURN):  # score200以上
+            if score.value >= 200 and (event.type == pg.KEYDOWN and event.key == pg.K_RETURN):  # score200以上で
                 # print("AAA")
                 score.value -= 200  # scoreのうち200を消費
                 gra.add(Gravity())
