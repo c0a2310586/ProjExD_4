@@ -294,8 +294,9 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
-            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+            if (score.value >= 200) and (event.type == pg.KEYDOWN and event.key == pg.K_RETURN):  # score200以上
                 # print("AAA")
+                score.value -= 200  # scoreのうち200を消費
                 gra.add(Gravity())
         screen.blit(bg_img, [0, 0])
 
@@ -322,6 +323,13 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+
+        for emy in pg.sprite.groupcollide(emys, gra, True, False).keys():  # 重力と衝突した敵機リスト
+            exps.add(Explosion(emy, 100))  # 敵機の爆発エフェクト
+        
+        for bomb in pg.sprite.groupcollide(bombs, gra, True, False).keys():  # 重力と衝突した爆弾リスト
+            exps.add(Explosion(bomb, 50))  # 爆弾の爆発エフェクト
+
 
         bird.update(key_lst, screen)
         beams.update()
